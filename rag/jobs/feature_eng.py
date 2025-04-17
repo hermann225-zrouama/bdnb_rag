@@ -5,7 +5,7 @@ from pathlib import Path
 from sklearn.linear_model import LinearRegression
 from sklearn.impute import KNNImputer
 import numpy as np
-from rag.tools.config import DATA_DIR, CONSOLIDATED_PARQUET, SQLITE_DB_PATH
+from rag.tools.config import DATA_DIR, CONSOLIDATED_PARQUET, SQLITE_DB_PATH, FETCH_LIMIT
 from rag.tools.logger import setup_logger
 
 warnings.filterwarnings("ignore")  # Ignorer les avertissements mineurs pour lisibilité
@@ -410,9 +410,11 @@ class BDNBFeatureEngineer:
 
         df_consolidated = self.merge_data()
 
-        ##################### recuperer que  10000 lignes
-        df_consolidated = df_consolidated.sample(10000)
-        ######################################################### A SUPPRIMER
+        # ##################### POUR DES BESOINS DE PERFORMANCE #####################
+        if FETCH_LIMIT > 0:
+            df_consolidated = df_consolidated.sample(FETCH_LIMIT)
+            self.logger.info(f"Applied FETCH_LIMIT: {FETCH_LIMIT} rows")
+        # ######################################################### 
 
         if output_path:
             df_consolidated.write_parquet(output_path, compression="snappy")

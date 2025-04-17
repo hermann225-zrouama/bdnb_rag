@@ -1,36 +1,87 @@
 version: '3.9'
 
 services:
+  jobs:
+    build:
+      context: .
+      dockerfile: rag/Dockerfile
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATA_DIR=/app/rag/data
+      - STORAGE_DIR=/app/rag/storage
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - FETCH_LIMIT=10000
+    volumes:
+      - ./rag/data:/app/rag/data
+      - ./rag/storage:/app/rag/storage
+      - ./pyproject.toml:/app/pyproject.toml
+      - ./uv.lock:/app/uv.lock
+      - ./Makefile:/app/Makefile
+    command: >
+      bash -c "make run-retriever &&
+               make run-feature-eng &&
+               make run-indexer"
+    depends_on:
+      qdrant:
+        condition: service_started
+      redis:
+        condition: service_started
+    networks:
+      - bdnb-network
+
   api:
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: rag/Dockerfile
     ports:
       - "8000:8000"
     environment:
       - PYTHONUNBUFFERED=1
+      - DATA_DIR=/app/rag/data
+      - STORAGE_DIR=/app/rag/storage
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     volumes:
-      - ./data:/app/data
-      - ./storage:/app/storage
+      - ./rag/data:/app/rag/data
+      - ./rag/storage:/app/rag/storage
+      - ./pyproject.toml:/app/pyproject.toml
+      - ./uv.lock:/app/uv.lock
+      - ./Makefile:/app/Makefile
+    command: make run-api
     depends_on:
-      - qdrant
-      - redis
-      - ollama
+      jobs:
+        condition: service_completed_successfully
+      qdrant:
+        condition: service_started
+      redis:
+        condition: service_started
     networks:
       - bdnb-network
 
   ui:
     build:
       context: .
-      dockerfile: Dockerfile.ui
+      dockerfile: ui/Dockerfile
     ports:
       - "8501:8501"
     environment:
       - PYTHONUNBUFFERED=1
+      - API_HOST=api
+      - API_PORT=8000
     volumes:
-      - ./data:/app/data
+      - ./ui:/app/ui
+      - ./pyproject.toml:/app/pyproject.toml
+      - ./uv.lock:/app/uv.lock
+      - ./Makefile:/app/Makefile
+    command: make run-ui
     depends_on:
-      - api
+      api:
+        condition: service_started
     networks:
       - bdnb-network
 
@@ -39,7 +90,7 @@ services:
     ports:
       - "6333:6333"
     volumes:
-      - ./qdrant_data:/qdrant/storage
+      - qdrant_data:/qdrant/storage
     networks:
       - bdnb-network
 
@@ -48,22 +99,21 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - ./redis_data:/data
-    networks:
-      - bdnb-network
-
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
-    volumes:
-      - ./ollama_data:/root/.ollama
-    environment:
-      - OLLAMA_MODELS=/root/.ollama/models
-    command: ["serve"]
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     networks:
       - bdnb-network
 
 networks:
   bdnb-network:
     driver: bridge
+    
+
+volumes:
+  qdrant_data:
+  redis_data:

@@ -2,13 +2,8 @@ import streamlit as st
 import requests
 import plotly.express as px
 import polars as pl
-from pathlib import Path
 from tools.config import API_HOST, API_PORT
-from tools.logger import setup_logger
 
-
-# Initialisation du logger
-logger = setup_logger("ui", log_file=str(Path("data") / "ui.log"))
 
 # Configuration de l'API
 API_URL = f"http://{API_HOST}:{API_PORT}/chat"
@@ -26,8 +21,7 @@ Exemples de questions :
 query = st.text_input("Posez votre question sur les bâtiments :", key="query_input")
 if query:
     try:
-        logger.info(f"Sending query to API: {query[:50]}...")
-        response = requests.post(API_URL, json={"message": query}, timeout=10)
+        response = requests.post(API_URL, json={"message": query}, timeout=3600)
         response.raise_for_status()
         result = response.json()
 
@@ -65,12 +59,9 @@ if query:
                         st.write(f"**Classe DPE** : {node['metadata']['classe_bilan_dpe']}")
                         st.write(f"**Passoire thermique** : {'Oui' if node['metadata']['is_passoire_thermique'] else 'Non'}")
 
-        logger.info(f"Query processed successfully: {query[:50]}...")
     except requests.exceptions.RequestException as e:
-        logger.error(f"API request failed: {e}")
         st.error(f"Erreur de connexion à l'API : {str(e)}")
     except Exception as e:
-        logger.error(f"Error processing query: {e}")
         st.error(f"Erreur : {str(e)}")
 
 # Footer
@@ -78,4 +69,4 @@ st.markdown("---")
 st.markdown("BDNB RAG - Version 1.0")
 
 if __name__ == "__main__":
-    logger.info("Streamlit UI started")
+    print("Streamlit UI started")

@@ -41,3 +41,6 @@ API_HOST = os.getenv("API_HOST", API_HOST)
 API_PORT = int(os.getenv("API_PORT", API_PORT))
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", BATCH_SIZE))
 SIMILARITY_TOP_K = int(os.getenv("SIMILARITY_TOP_K", SIMILARITY_TOP_K))
+
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+FETCH_LIMIT = int(os.getenv("FETCH_LIMIT", 0))  # Limite de récupération des documents

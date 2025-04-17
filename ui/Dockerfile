@@ -1,9 +1,23 @@
-# Utiliser une image Python légère avec uv préinstallé
-FROM ghcr.io/astral-sh/uv:python3.12-alpine
+# Utiliser l'image officielle uv basée sur Debian Bookworm
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
+# Installer make, curl et autres dépendances système
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    make \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Définir le répertoire de travail
 WORKDIR /app
-COPY . /app
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Copier les fichiers de dépendances et le Makefile
+COPY pyproject.toml uv.lock Makefile ./
 
-CMD ["uv", "run", "streamlit", "run", "ui_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Synchroniser les dépendances avec uv
+RUN uv sync --frozen
+
+# Copier le répertoire ui/ contenant le code
+COPY ui/ ./ui/
+
+# Commande par défaut (sera remplacée par docker-compose)
+CMD ["make", "run-ui"]

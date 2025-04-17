@@ -6,13 +6,14 @@ from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.vector_stores.qdrant import QdrantVectorStore
 from llama_index.llms.ollama import Ollama
+from llama_index.llms.huggingface import HuggingFaceLLM
 from qdrant_client import QdrantClient
 from rag.tools.database import BDNBDatabase
 from rag.jobs.indexer import BDNBIndexer
 from rag.tools.cache import ResponseCache
 from rag.tools.config import (
     EMBEDDING_MODEL, QDRANT_HOST, QDRANT_PORT, COLLECTION_NAME, 
-    LLM_MODEL, STORAGE_DIR, SIMILARITY_TOP_K, DATA_DIR
+    LLM_MODEL, STORAGE_DIR, SIMILARITY_TOP_K, DATA_DIR, OLLAMA_BASE_URL, REDIS_HOST,REDIS_PORT
 )
 from rag.helpers.prompts import (
     analyze_prompt, format_sql_prompt, custom_prompt
@@ -29,10 +30,10 @@ chat_router = APIRouter()
 logger = setup_logger("chat", log_file=str(Path(DATA_DIR) / "chat.log"))
 
 embed_model = HuggingFaceEmbedding(model_name=EMBEDDING_MODEL)
-llm = Ollama(model=LLM_MODEL, request_timeout=120.0)
+llm = Ollama(model=LLM_MODEL, request_timeout=3600, base_url=OLLAMA_BASE_URL)
 qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
 db = BDNBDatabase()
-cache = ResponseCache()
+cache = ResponseCache(host=REDIS_PORT, port=REDIS_HOST)
 
 # Charger la fonction de filtre Qdrant
 try:
