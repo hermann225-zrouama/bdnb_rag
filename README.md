@@ -1,10 +1,12 @@
 # 🏡 BDNB Chat Application
 
-The **BDNB Chat Application** is a Retrieval-Augmented Generation (RAG) system designed to provide conversational insights about building energy efficiency. It leverages:
+The **BDNB Chat Application** is a Retrieval-Augmented Generation (RAG) system designed to provide conversational insights about the BDNB. It leverages:
 
 - 🧠 **Ollama** for local LLM inference  
 - 📚 **Qdrant** for vector similarity search  
 - ⚡ **Redis** for response caching  
+
+For performance we only use a sample of data related to Departement 75 (Paris) and the **llama3.2:3b** model. The system is designed to be easily extensible to other departments or datasets.
 
 ---
 

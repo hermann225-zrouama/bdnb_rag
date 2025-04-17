@@ -163,7 +163,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--departements", "-d",
         nargs="+",
-        default=["93"],
+        default=["75"],
         help="Liste des départements à traiter (ex: 75 93 13). Si non spécifié, traite tous. valeur par defaut 93",
     )
     parser.add_argument(
