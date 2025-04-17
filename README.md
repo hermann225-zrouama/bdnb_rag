@@ -1,9 +1,3 @@
-Parfait, je vais fusionner les deux parties en intégrant les nouvelles infos de description du fonctionnement (pipeline RAG, explications des rôles, etc.) directement dans le `README.md` existant **sans supprimer** ce qui est déjà bien structuré.
-
----
-
-Voici la **version fusionnée complète** de ton `README.md` :
-
 ```markdown
 # 🏡 BDNB Chat Application
 
