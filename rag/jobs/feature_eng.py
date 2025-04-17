@@ -5,8 +5,8 @@ from pathlib import Path
 from sklearn.linear_model import LinearRegression
 from sklearn.impute import KNNImputer
 import numpy as np
-from tools.config import DATA_DIR, CONSOLIDATED_PARQUET, SQLITE_DB_PATH
-from tools.logger import setup_logger
+from rag.tools.config import DATA_DIR, CONSOLIDATED_PARQUET, SQLITE_DB_PATH
+from rag.tools.logger import setup_logger
 
 warnings.filterwarnings("ignore")  # Ignorer les avertissements mineurs pour lisibilité
 

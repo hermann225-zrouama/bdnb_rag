@@ -7,11 +7,11 @@ from qdrant_client.models import VectorParams, Distance, Filter, FieldCondition,
 from pathlib import Path
 from tqdm import tqdm
 import pickle
-from tools.config import (
+from rag.tools.config import (
     EMBEDDING_MODEL, QDRANT_HOST, QDRANT_PORT, COLLECTION_NAME, 
     CONSOLIDATED_PARQUET, STORAGE_DIR
 )
-from tools.logger import setup_logger
+from rag.tools.logger import setup_logger
 
 
 class BDNBIndexer:

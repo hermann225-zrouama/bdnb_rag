@@ -1,8 +1,8 @@
 import sqlite3
 import polars as pl
 from pathlib import Path
-from tools.config import SQLITE_DB_PATH, CONSOLIDATED_PARQUET
-from tools.logger import setup_logger
+from rag.tools.config import SQLITE_DB_PATH, CONSOLIDATED_PARQUET
+from rag.tools.logger import setup_logger
 
 class BDNBDatabase:
     """

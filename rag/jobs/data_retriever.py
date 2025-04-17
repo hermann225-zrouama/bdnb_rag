@@ -9,17 +9,18 @@ from tqdm import tqdm
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from pathlib import Path
-from tools.config import DATA_DIR
-from tools.logger import setup_logger
+from rag.tools.config import DATA_DIR
+from rag.tools.logger import setup_logger
 
-# === Config par défaut ===
 TEMP_DIR = os.path.join(DATA_DIR, "temp_bdnb_data")
 OUTPUT_DIR = os.path.join(DATA_DIR, "files")
 PROCESSED_DEPTS_FILE = os.path.join(OUTPUT_DIR, "processed_depts.txt")
 URL = "https://bdnb.io/archives_data/bdnb_millesime_2024_10_a/"
 
 # === Logger ===
-logger = setup_logger("consolidate", log_file=os.path.join(DATA_DIR, "consolidate.log"))
+# Utilisation de DATA_DIR pour stocker les logs dans le répertoire des données
+logger = setup_logger("data_retriever", log_file=os.path.join(DATA_DIR, "data_retriever.log"))
+
 
 # === Créer les dossiers ===
 os.makedirs(TEMP_DIR, exist_ok=True)

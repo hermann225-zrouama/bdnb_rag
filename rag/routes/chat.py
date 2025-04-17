@@ -7,18 +7,18 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.vector_stores.qdrant import QdrantVectorStore
 from llama_index.llms.ollama import Ollama
 from qdrant_client import QdrantClient
-from tools.database import BDNBDatabase
-from tools.indexer import BDNBIndexer
-from tools.cache import ResponseCache
-from tools.config import (
+from rag.tools.database import BDNBDatabase
+from rag.jobs.indexer import BDNBIndexer
+from rag.tools.cache import ResponseCache
+from rag.tools.config import (
     EMBEDDING_MODEL, QDRANT_HOST, QDRANT_PORT, COLLECTION_NAME, 
-    LLM_MODEL, STORAGE_DIR, SIMILARITY_TOP_K
+    LLM_MODEL, STORAGE_DIR, SIMILARITY_TOP_K, DATA_DIR
 )
-from helpers.prompts import (
+from rag.helpers.prompts import (
     analyze_prompt, format_sql_prompt, custom_prompt
 )
-from helpers.lib import get_collection_name, analyze_question_with_llm, format_sql_results_with_llm
-from tools.logger import setup_logger
+from rag.helpers.lib import get_collection_name, analyze_question_with_llm, format_sql_results_with_llm
+from rag.tools.logger import setup_logger
 import pickle
 from pathlib import Path
 
@@ -26,7 +26,7 @@ from pathlib import Path
 chat_router = APIRouter()
 
 # Initialisation du logger
-logger = setup_logger("chat", log_file=str(Path("data") / "chat.log"))
+logger = setup_logger("chat", log_file=str(Path(DATA_DIR) / "chat.log"))
 
 embed_model = HuggingFaceEmbedding(model_name=EMBEDDING_MODEL)
 llm = Ollama(model=LLM_MODEL, request_timeout=120.0)
