@@ -1,4 +1,3 @@
-```markdown
 # 🏡 BDNB Chat Application
 
 The **BDNB Chat Application** is a Retrieval-Augmented Generation (RAG) system designed to provide conversational insights about building energy efficiency. It leverages:
@@ -53,7 +52,6 @@ This project uses a **RAG (Retrieval-Augmented Generation)** approach to answer 
 
 ## 🗂 Project Structure
 
-```
 .
 ├── Makefile                         # Automation for jobs, API, and UI
 ├── README.md                        # This file
