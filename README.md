@@ -1,274 +1,362 @@
-# BDNB Assistant
-
-**BDNB Assistant** est une application permettant d'interroger la Base de Données Nationale des Bâtiments (BDNB) en langage naturel.  
-Elle combine une approche hybride de **RAG (Retrieval-Augmented Generation)** pour les questions descriptives et des **requêtes SQL** pour les analyses quantitatives.
-
-L'application comprend :
-- Une **API FastAPI** pour les requêtes programmatiques.
-- Une **interface Streamlit** conviviale pour les utilisateurs non-techniques, avec filtres interactifs et visualisations.
-- Une architecture entièrement **containerisée avec Docker**, utilisant :
-  - **Qdrant** pour le stockage vectoriel.
-  - **Redis** pour le cache.
-  - **Ollama** pour le modèle de langage.
-  - **SQLite** pour les données consolidées.
+Parfait, je vais fusionner les deux parties en intégrant les nouvelles infos de description du fonctionnement (pipeline RAG, explications des rôles, etc.) directement dans le `README.md` existant **sans supprimer** ce qui est déjà bien structuré.
 
 ---
 
-## ✨ Fonctionnalités
+Voici la **version fusionnée complète** de ton `README.md` :
 
-- **Requêtes en langage naturel**  
-  Posez des questions comme :
-  - "Quels sont les bâtiments résidentiels classés F ou G dans le département 93 ?"
-  - "Quelle est la surface moyenne des bâtiments tertiaires avant 1975 dans le Rhône ?"
+```markdown
+# 🏡 BDNB Chat Application
 
-- **Approche hybride**  
-  Combine RAG (via Qdrant et LlamaIndex) pour les descriptions et SQL (via SQLite) pour les calculs agrégés.
+The **BDNB Chat Application** is a Retrieval-Augmented Generation (RAG) system designed to provide conversational insights about building energy efficiency. It leverages:
 
-- **Cache Redis**  
-  Optimise les performances en stockant les réponses fréquentes.
-
-- **Interface Streamlit**  
-  Interface web avec filtres (département, type de bâtiment, DPE, surface, étages) et visualisations (tableaux, graphiques Plotly).
-
-- **Reproductibilité**  
-  Entièrement containerisé avec Docker Compose.
-
-- **Feature engineering**  
-  Génère des caractéristiques comme surface estimée, type de bâtiment, passoires thermiques, et localisation.
+- 🧠 **Ollama** for local LLM inference  
+- 📚 **Qdrant** for vector similarity search  
+- ⚡ **Redis** for response caching  
 
 ---
 
-## 🏗️ Architecture
+## 🔍 How It Works
 
-Le projet est modulaire avec les composants suivants :
+This project uses a **RAG (Retrieval-Augmented Generation)** approach to answer natural language queries about building energy efficiency from the BDNB (Base de Données Nationale des Bâtiments).
 
-- `consolidate.py` : Télécharge et échantillonne les données BDNB depuis [https://bdnb.io](https://bdnb.io)
-- `feature_eng.py` : Génère des features (surface, DPE, type de bâtiment, etc.)
-- `indexer.py` : Indexe les données dans Qdrant avec LlamaIndex, shardées par département.
-- `database.py` : Gère la base SQLite pour les requêtes quantitatives.
-- `cache.py` : Implémente un cache Redis.
-- `main.py` : API FastAPI.
-- `ui.py` : Interface Streamlit.
-- `logger.py` : Logging structuré.
-- `config.py` : Centralise les configurations.
+### 🔄 Full Pipeline Overview
+
+1. **Data Retrieval**
+   - Source: Public BDNB datasets
+   - Tools: Jobs in `rag/jobs/` fetch and clean the data.
+
+2. **Feature Engineering**
+   - Creates standardized text chunks from raw BDNB entries.
+   - Stored locally in `rag/data/`.
+
+3. **Embedding + Indexing**
+   - Text chunks are embedded using `sentence-transformers/all-MiniLM-L6-v2`.
+   - Stored in **Qdrant** for fast vector search.
+
+4. **Querying**
+   - User messages go through the API.
+   - Top-k similar documents are retrieved via Qdrant.
+
+5. **RAG Prompt Construction**
+   - Retrieved context is appended to user prompt.
+   - Prompt is sent to the local LLM (Ollama running `llama3.2:3b` by default).
+
+6. **Response Generation**
+   - Ollama generates a reply using the provided context.
+   - Result is cached in Redis (TTL: 1 hour) to avoid recomputation.
 
 ---
 
-## 🧰 Prérequis
+## 🧩 Components
 
-- **Docker** : Docker Desktop (Windows/Mac) ou Docker Engine (Linux)
-- **Docker Compose**
-- **Espace disque** : Environ 5 Go
-- **RAM** : Minimum 16 Go recommandé
+- **Jobs**: Data retrieval, feature engineering, and indexing pipelines.
+- **API**: FastAPI backend exposing the `/chat` endpoint.
+- **UI**: Streamlit frontend for user interaction.
+
+> 🐳 Most services are containerized, but **Ollama runs on the host** for faster and more reliable inference.
 
 ---
 
-## ⚙️ Installation
+## 🗂 Project Structure
 
-### 1. Cloner le dépôt
+```
+.
+├── Makefile                         # Automation for jobs, API, and UI
+├── README.md                        # This file
+├── check_ollama_prerequisites.sh   # Host Ollama setup verification
+├── docker-compose.yml              # Docker Compose orchestration
+├── entrypoint.sh                   # Legacy Ollama entrypoint (unused)
+├── pyproject.toml                  # Python dependencies
+├── rag                             # Backend logic (jobs, API)
+│   ├── Dockerfile
+│   ├── api.py
+│   ├── data/
+│   ├── helpers/
+│   ├── jobs/
+│   ├── routes/
+│   ├── storage/
+│   └── tools/
+├── ui                              # Frontend (Streamlit)
+│   ├── Dockerfile
+│   ├── ui.py
+│   └── tools/
+└── uv.lock                         # Dependency lock file
+```
+
+---
+
+## 💻 Prerequisites
+
+### 🖥 Host Machine
+
+- **OS**: Linux, macOS, or Windows (with Docker Desktop)
+- **CPU**: ≥ 4 cores
+- **RAM**: ≥ 4GB (6GB+ for `llama3.2:3b`)
+- **Disk**: ≥ 6GB free
+
+### 📦 Software
+
+- Docker + Docker Compose
+- Python 3.10+
+- [Ollama](https://ollama.com) installed on the host
+
+---
+
+## ⚙️ Ollama Setup
+
+Install and run Ollama on the host:
 
 ```bash
-git clone https://github.com/votre-utilisateur/bdnb-assistant.git
-cd bdnb-assistant
+curl -fsSL https://ollama.com/install.sh | sh
+ollama serve &
+ollama pull llama3.2:3b  # Or use llama3.2:1b for lighter model
+curl http://localhost:11434/api/tags
 ```
 
-> Remplacez l’URL par celle de votre dépôt si nécessaire.
-
----
-
-### 2. Configurer les variables d’environnement
+To validate your setup, run:
 
 ```bash
-cp .env.example .env
-```
-
-Contenu typique de `.env` :
-
-```env
-API_HOST=0.0.0.0
-API_PORT=8000
-QDRANT_HOST=qdrant
-QDRANT_PORT=6333
-REDIS_HOST=redis
-REDIS_PORT=6379
-LLM_MODEL=llama3
-EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
-COLLECTION_NAME=bdnb_buildings
-SQLITE_DB_PATH=/app/data/bdnb.db
-CONSOLIDATED_PARQUET=/app/data/bdnb_consolidated_93.parquet
-STORAGE_DIR=/app/storage
-BATCH_SIZE=1000
-SIMILARITY_TOP_K=5
-DATA_DIR=/app/data
-REDIS_TTL=3600
+chmod +x check_ollama_prerequisites.sh
+./check_ollama_prerequisites.sh
 ```
 
 ---
 
-### 3. Initialiser les données
+## 🚀 Setup
+
+### 1. Clone the Repository
 
 ```bash
-chmod +x init.sh
-./init.sh
+git clone <repository-url>
+cd bdnb-chat
 ```
 
-Ce script exécute :
-- `consolidate.py`
-- `feature_eng.py`
-- `indexer.py`
-
-> Assurez-vous que Qdrant est lancé (`docker run -d -p 6333:6333 qdrant/qdrant`) avant `indexer.py`.
-
----
-
-### 4. Lancer les services
+### 2. Install Python Dependencies
 
 ```bash
-docker-compose up --build
+pip install uv
+uv sync
 ```
 
-Services accessibles :
-- API FastAPI : [http://localhost:8000](http://localhost:8000)
-- Interface Streamlit : [http://localhost:8501](http://localhost:8501)
-- Qdrant : `localhost:6333`
-- Redis : `localhost:6379`
-- Ollama : `localhost:11434`
+### 3. Verify Ollama Setup
+
+```bash
+./check_ollama_prerequisites.sh
+```
 
 ---
 
-### 5. Utiliser l'application
+## 🐳 Docker Compose Configuration
 
-- **Interface Streamlit** : [http://localhost:8501](http://localhost:8501)
-- Posez des questions en langage naturel.
-- Utilisez les filtres dans la barre latérale.
+Edit `docker-compose.yml` if needed.
 
-**Exemple d’appel API :**
+> Default Ollama URL: `http://host.docker.internal:11434`
+
+If you're on **Linux** and `host.docker.internal` doesn't resolve:
+
+```yaml
+environment:
+  - OLLAMA_BASE_URL=http://<your-host-ip>:11434
+```
+
+Get your host IP:
+
+```bash
+ip addr show | grep inet
+```
+
+---
+
+## 🔧 Build & Start Services
+
+```bash
+docker-compose build
+docker-compose up -d
+```
+
+This will:
+
+- Run all jobs (retriever, feature eng, indexer)
+- Start API at [http://localhost:8000](http://localhost:8000)
+- Launch Streamlit UI at [http://localhost:8501](http://localhost:8501)
+
+---
+
+## ✅ Verify It's Working
+
+### Test the API:
 
 ```bash
 curl -X POST "http://localhost:8000/chat" \
-     -H "Content-Type: application/json" \
-     -d '{"message": "Liste des bâtiments résidentiels de plus de 1000 m² dans le département 93"}'
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is the energy efficiency of buildings in Paris?"}'
 ```
+
+### Launch UI:
+
+Open [http://localhost:8501](http://localhost:8501)
 
 ---
 
-### 6. Arrêter les services
+## ⚙️ Configuration Reference
+
+Config is located in `rag/tools/config.py` and overridden in `docker-compose.yml`.
+
+| Variable           | Description                         | Default                                  |
+|--------------------|-------------------------------------|------------------------------------------|
+| `OLLAMA_BASE_URL`  | Host Ollama server                  | `http://host.docker.internal:11434`      |
+| `LLM_MODEL`        | Model name                          | `llama3.2:3b`                             |
+| `EMBEDDING_MODEL`  | Embedding model                     | `sentence-transformers/all-MiniLM-L6-v2` |
+| `QDRANT_HOST`      | Qdrant server host                  | `qdrant`                                  |
+| `QDRANT_PORT`      | Qdrant server port                  | `6333`                                    |
+| `REDIS_HOST`       | Redis server host                   | `redis`                                   |
+| `REDIS_PORT`       | Redis server port                   | `6379`                                    |
+| `DATA_DIR`         | Raw data directory                  | `rag/data`                                |
+| `STORAGE_DIR`      | Vector index storage                | `rag/storage`                             |
+| `FETCH_LIMIT`      | Limit for data pull                 | `10000`                                   |
+| `REDIS_TTL`        | Cache TTL in seconds                | `3600`                                    |
+| `SIMILARITY_TOP_K` | Top K results from vector search    | `5`                                       |
+
+---
+
+## 🧪 Usage Examples
+
+### Start Ollama on Host
 
 ```bash
-docker-compose down
+ollama serve &
+```
+
+### Verify Prereqs
+
+```bash
+./check_ollama_prerequisites.sh
+```
+
+### Launch Services
+
+```bash
+docker-compose up -d
 ```
 
 ---
 
-## 📁 Structure du projet
+## 🛠 Makefile Shortcuts
 
-```plaintext
-bdnb-assistant/
-├── data/                   # Données BDNB, SQLite, et logs
-├── storage/                # Index LlamaIndex
-├── qdrant_data/            # Données persistantes Qdrant
-├── redis_data/             # Données persistantes Redis
-├── ollama_data/            # Modèles Ollama
-├── cache.py
-├── config.py
-├── consolidate.py
-├── database.py
-├── feature_eng.py
-├── indexer.py
-├── logger.py
-├── main.py
-├── ui.py
-├── Dockerfile.api
-├── Dockerfile.ui
-├── pyproject.toml
-├── docker-compose.yml
-├── .env
-├── .dockerignore
-├── init.sh
-└── README.md
+```bash
+make run-retriever
+make run-feature-eng
+make run-indexer
+make run-api
+make run-ui
 ```
 
 ---
 
-## 📦 Dépendances
+## 🔄 Switching Models
 
-Gérées via `uv` et définies dans `pyproject.toml`. Principaux packages :
+Use a lighter model for faster inference:
 
-- `polars` : Traitement de données
-- `llama-index` : Indexation / RAG
-- `qdrant-client` : Stockage vectoriel
-- `fastapi`, `uvicorn` : API
-- `streamlit`, `plotly` : Interface et visualisations
-- `redis` : Cache
+```bash
+ollama pull llama3.2:1b
+```
 
----
+Update in `docker-compose.yml`:
 
-## 🔗 Services externes
+```yaml
+environment:
+  - LLM_MODEL=llama3.2:1b
+```
 
-- **Qdrant** : Stockage vectoriel pour les embeddings
-- **Redis** : Cache pour les réponses
-- **Ollama** : Modèle de langage (ex : `llama3`)
-- **SQLite** : Base de données pour les analyses
+Restart services:
 
----
-
-## 🔁 Reproductibilité
-
-- **Docker** : Containerisation complète
-- **uv** : Gestion déterministe des dépendances
-- **`.env`** : Configuration centralisée
-- **`init.sh`** : Initialisation cohérente des données
-- **Logs** : Débogage dans `data/*.log`
+```bash
+docker-compose up -d
+```
 
 ---
 
-## 🧪 Exemples de requêtes
+## 🧯 Troubleshooting
 
-### 🔍 Descriptives (RAG)
+### 🔌 Ollama Not Reachable?
 
-- "Liste des bâtiments résidentiels de plus de 1000 m² dans le département 93."
-- "Décris les bâtiments tertiaires classés G à Marseille."
+```bash
+curl http://localhost:11434/api/tags
+ollama serve &
+```
 
-### 📊 Quantitatives (SQL)
+Use host IP if needed:
 
-- "Quelle est la surface moyenne des bâtiments tertiaires avant 1975 dans le Rhône ?"
-- "Quel est le pourcentage de bâtiments résidentiels avant 1948 à Lyon ?"
-- "Quels sont les 10 quartiers de Marseille avec le plus de passoires thermiques ?"
-- "Quelle commune du département 34 a le plus de bâtiments classés G ?"
-
----
-
-## 🤝 Contribution
-
-1. **Forkez** le dépôt
-2. **Créez une branche** : `git checkout -b feature/ma-fonctionnalite`
-3. **Ajoutez des tests** dans `tests/` (avec `pytest`)
-4. **Soumettez une pull request**
-
-### Suggestions d'améliorations
-
-- Génération de requêtes SQL dynamiques via NLP
-- Visualisations géographiques (ex. Folium)
-- Optimisation de l’indexation avec parallélisme
-- Authentification API
+```yaml
+environment:
+  - OLLAMA_BASE_URL=http://<host-ip>:11434
+```
 
 ---
 
-## 🐞 Problèmes connus
+### ❗ Model Not Found?
 
-- **Téléchargement** : `consolidate.py` peut être lent → possibilité de pré-téléchargement
-- **Mémoire** : départements volumineux = besoin de RAM élevé
-- manque de pertinence dans les réponses RAG en raison de la limitation à un seul departement (le 93 par defaut)
-
----
-
-## 📄 Licence
-
-MIT License – voir le fichier `LICENSE`.
+```bash
+ollama list
+ollama pull llama3.2:3b
+```
 
 ---
 
-## 📬 Contact
+### ⚠️ API 500 Errors?
 
-Pour toute question, ouvrez une issue ou contactez :  
-`[fzrouama@gmail.com](mailto:fzrouama@gmail.com)`
+```bash
+docker-compose logs api
+```
+
+Test directly:
+
+```bash
+curl -X POST http://localhost:11434/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"model": "llama3.2:3b", "messages": [{"role": "user", "content": "Hello"}]}'
+```
+
+---
+
+### 🐌 Slow Inference?
+
+- Use `llama3.2:1b`
+- Enable GPU:
+
+```bash
+export OLLAMA_CUDA_ENABLED=1
+ollama serve
+```
+
+---
+
+## 🧰 Debugging Tools
+
+```bash
+docker stats
+free -m
+df -h
+docker-compose logs <service>
+```
+
+Test network:
+
+```bash
+curl https://registry.ollama.ai/v2/library/llama3.2/manifests/3b
+```
+
+---
+
+## 🤝 Contributing
+
+- Follow [PEP8](https://peps.python.org/pep-0008/)
+- Include tests
+- Update `pyproject.toml` if you add dependencies
+
+---
+
+## 📄 License
+
+Licensed under the **MIT License**. See [LICENSE](LICENSE) file for details.
+```
